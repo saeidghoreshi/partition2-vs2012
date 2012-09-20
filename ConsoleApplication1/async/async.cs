@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.Net;
-using System.Threading.Tasks;
 using System.Threading;
 
 
@@ -84,16 +83,59 @@ namespace ConsoleApplication1.async
 
                 var response = (HttpWebResponse)await GetResponseTask;//Blocks the main thread
 
-                Console.WriteLine("waiting");
+                Console.WriteLine("then continues");
 
-                string headersText = formatOutput(response.Headers);
-                Console.WriteLine(headersText);
+                var T2 = GetResponseTask.ContinueWith(
+                    (respTask) => 
+                    {
+                        string headersText = formatOutput(response.Headers);
+                        Console.WriteLine(headersText);
+                    }
+                );
+
+                
             }
-            catch (Exception e)
+            catch (WebException e)
             {
                 Console.WriteLine(e.Message);
             }
         }
-
+        public void runAsyncModern3() 
+        {
+            Console.WriteLine("started");
+            doWork();
+            Console.WriteLine("Ended");
+        }
+        public async void doWork()
+        {
+            string result=await  new Awaitable();
+            Console.WriteLine(result);
+        }
     }
+    
+    public class Awaitable 
+    {
+        public Awaiter GetAwaiter() 
+        {
+            return new Awaiter();
+        }
+    }
+    public class Awaiter:System.Runtime.CompilerServices.INotifyCompletion {
+
+        public bool BeginAwait(Action callback) { return true; }
+        public string EndAwait() { return "End Await is called"; }
+
+        public bool IsCompleted { get { return true; } }
+        public void OnCompleted(Action continuation)
+        {
+            throw new NotImplementedException();
+        }
+        public string GetResult()
+        {
+            Thread.Sleep(5000);
+            return "result";
+        }
+    }
+
+
 }
